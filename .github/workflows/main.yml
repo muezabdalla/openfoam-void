@@ -1,0 +1,103 @@
+name: build
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+    inputs:
+      ofVersion:
+        description: 'the version of openfoam'
+        required: true
+        default: '13'
+
+jobs:
+  build:
+    strategy:
+      max-parallel: 1
+      matrix:
+        arch: [x86_64]
+    runs-on: ubuntu-22.04
+    env:
+      XBPS_TARGET_ARCH: ${{ matrix.arch }}
+
+    steps:
+      - name: free space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo apt install git
+
+      - name: checkout void-packages
+        uses: actions/checkout@v4
+        with:
+          repository: void-linux/void-packages
+          ref: master
+          path: void-packages
+
+      - name: checkout xbps
+        uses: actions/checkout@v4
+        with:
+          repository: void-linux/xbps
+          ref: 0.60.3
+          path: xbps
+
+      - name: build and install xbps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-dev
+          cd xbps
+          ./configure --enable-rpath --prefix=/opt/xbps/usr
+          make -j4
+          sudo make install clean
+
+      - name: copy openfoam into srcpkgs
+        run: |
+          git clone https://github.com/muezabdalla/openfoam-void.git openfoam-void
+          cp -rv openfoam-void/srcpkgs/openfoam* void-packages/srcpkgs
+          echo "RELEASE_NAME=openfoam-void" >> $GITHUB_ENV
+
+      - name: build
+        run: |
+          export PATH="/opt/xbps/usr/bin/:$PATH"
+          cd void-packages
+          ./xbps-src -m masterdir-${{ matrix.arch }} -A ${{ matrix.arch }} binary-bootstrap
+          ./xbps-src pkg -j4 -m masterdir-${{ matrix.arch }} openfoam${{ inputs.ofVersion }}
+
+      - name: download latest release to copy old packages
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: 'muezabdalla/openfoam-void'
+          latest: true
+          fileName: 'openfoam*'
+
+      - name: sign
+        env:
+          XBPS_PASSPHRASE: ${{ secrets.SIGN_KEY }}
+        working-directory: void-packages/hostdir/binpkgs/
+        run: |
+          export PATH="/opt/xbps/usr/bin/:$PATH"
+          cp -r ../../../openfoam[0-9]* .
+          rm x86_64-repodata
+          echo "PWD"
+          ls $PWD
+          xbps-rindex -r $PWD
+          xbps-rindex -a $PWD/*
+          xbps-rindex -s --signedby "muezabdalla <muezabdalla777@gmail.com>" --privkey <(printf '%s' "${{ secrets.PRIV_OF_KEY }}") $PWD
+          xbps-rindex -S --privkey <(printf '%s' "${{ secrets.PRIV_OF_KEY }}") $PWD/*.xbps
+
+      - name: checksum
+        working-directory: void-packages/hostdir/binpkgs/
+        run: |
+          sha256sum $(echo openfoam*.${{ matrix.arch }}.xbps)
+          sha512sum $(echo openfoam*.${{ matrix.arch }}.xbps)
+
+      - name: release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_NAME }}
+          files: |
+            void-packages/hostdir/binpkgs/openfoam*
+            void-packages/hostdir/binpkgs/*repodata
