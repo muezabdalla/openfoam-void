@@ -79,6 +79,7 @@ jobs:
         working-directory: void-packages/hostdir/binpkgs/
         run: |
           export PATH="/opt/xbps/usr/bin/:$PATH"
+          cp -nr ../../../openfoam[0-9]* .
           rm x86_64-repodata
           echo "PWD"
           ls $PWD
