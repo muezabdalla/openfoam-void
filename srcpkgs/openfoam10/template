@@ -1,0 +1,55 @@
+# Template file for 'openfoam10'
+pkgname=openfoam10
+majorVersion=10
+minorVersion=20230119
+version=${majorVersion}.${minorVersion}
+revision=1
+build_style=""
+configure_args=""
+hostmakedepends="wget"
+makedepends="openmpi-devel flex base-devel openmpi"
+depends="openmpi libboost_thread flex openmpi gnuplot"
+short_desc="OpenFOAM is a free, open source computational fluid dynamics (CFD) software package released by the OpenFOAM Foundation"
+maintainer="muez <muezabdalla777@gmail.com>"
+license="GPL-3.0"
+homepage="https://www.openfoam.org/"
+distfiles="http://dl.openfoam.org/source/${version}
+http://dl.openfoam.org/third-party/${majorVersion}"
+checksum="86f8cb18d4f59812b129ce7d669e8ff498da442fbdb46705492fbba3cbda82ab
+ d5e8b743e427e4e867af524649eceb6ac30ab444e9b99108ffb0f82c5373c93b"
+python_version=3
+
+do_fetch() {
+	mkdir -p $wrksrc
+	cd $wrksrc
+	wget ${distfiles}
+}
+do_extract() {
+	vtar -xf "${majorVersion}.${minorVersion}"
+	vtar -xf "${majorVersion}"
+}
+post_extract() {
+	ls
+	mv "OpenFOAM-${majorVersion}-${minorVersion}" "OpenFOAM-${majorVersion}"
+	mv "ThirdParty-${majorVersion}-version-${majorVersion}" "OpenFOAM-${majorVersion}/thirdparty"
+}
+do_patch() {
+	# patch the aliases file
+	#sed -i '78d' "OpenFOAM-${majorVersion}/etc/config.sh/aliases"
+	#sed -i '77aelif command -V wmRefresh 2> /dev/null\nthen' "OpenFOAM-${majorVersion}/etc/config.sh/aliases"
+
+	# patch the bashrc to accomodate for renaming ThirdParty -> thirdparty
+	sed -i 's;export WM_THIRD_PARTY_DIR=$WM_PROJECT_INST_DIR/ThirdParty-$WM_PROJECT_VERSION;export WM_THIRD_PARTY_DIR=$WM_PROJECT_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION/thirdparty;' "OpenFOAM-${majorVersion}/etc/bashrc"
+}
+do_build() {
+	export HOME="/builddir"
+	mkdir -p "$HOME/.OpenFOAM"
+	echo "export ParaView_TYPE=none" > $HOME/.OpenFOAM/prefs.sh
+	cd "OpenFOAM-${majorVersion}"
+	source ./etc/bashrc || return 0
+	./Allwmake -j ${makejobs}
+}
+do_install() {
+	mkdir ${PKGDESTDIR}/opt/
+	mv *-${majorVersion} ${PKGDESTDIR}/opt/
+}
