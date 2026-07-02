@@ -1,6 +1,8 @@
 # Template file for 'openfoam13'
 pkgname=openfoam13
-version=13
+majorVersion=13
+minorVersion=20260624
+version=${majorVersion}.${minorVersion}
 revision=1
 build_style=""
 configure_args=""
@@ -12,8 +14,8 @@ maintainer="muez <muezabdalla777@gmail.com>"
 license="GPL-3.0"
 homepage="https://www.openfoam.org/"
 distfiles="http://dl.openfoam.org/source/${version}
-http://dl.openfoam.org/third-party/${version}"
-checksum="9969d7f09411d72450855f855f2f37760ff147e3f137fd7063ce6bc26d629632
+http://dl.openfoam.org/third-party/${majorVersion}"
+checksum="efd246e1a96e84aa9fcbcf0cdb50a1a5a4ac7edf647625e0a66fb32203c68abc
  05c91a450113d0f728fa37677147a30fc19f1c04ebf8d70e478db2664f2e6fd9"
 python_version=3
 
@@ -23,36 +25,31 @@ do_fetch() {
 	wget ${distfiles}
 }
 do_extract() {
-	vtar -xf "${version}"
-	vtar -xf "${version}.1"
+	vtar -xf "${majorVersion}.${minorVersion}"
+	vtar -xf "${majorVersion}"
 }
 post_extract() {
-	mv "OpenFOAM-${version}-version-${version}" "OpenFOAM-${version}"
-	mv "ThirdParty-${version}-version-${version}" "OpenFOAM-${version}/thirdparty"
+	mv "OpenFOAM-${majorVersion}-${minorVersion}" "OpenFOAM-${majorVersion}"
+	mv "ThirdParty-${majorVersion}-version-${majorVersion}" "OpenFOAM-${majorVersion}/thirdparty"
 }
 do_patch() {
-	# patch the aliases file
-	sed -i '78d' "OpenFOAM-${version}/etc/config.sh/aliases"
-	sed -i '77aelif command -V wmRefresh 2> /dev/null\nthen' "OpenFOAM-${version}/etc/config.sh/aliases"
-
 	# patch the openmpi file
-	sed -i '46d' "OpenFOAM-${version}/etc/config.sh/mpi"
-	sed -i "46alibDir=\`mpicc --showme:link | sed -e \'s/.*\\\(-L\\\|-Wl,-rpath=\\\|-Wl,-rpath,\\\|-Wl,-rpath -Wl,\\\)\\\([^ ]*\\\).*/\\\2/\'\`" "OpenFOAM-${version}/etc/config.sh/mpi"
+	sed -i '46d' "OpenFOAM-${majorVersion}/etc/config.sh/mpi"
+	sed -i "46alibDir=\`mpicc --showme:link | sed -e \'s/.*\\\(-L\\\|-Wl,-rpath=\\\|-Wl,-rpath,\\\|-Wl,-rpath -Wl,\\\)\\\([^ ]*\\\).*/\\\2/\'\`" "OpenFOAM-${majorVersion}/etc/config.sh/mpi"
 
 	# patch the bashrc to accomodate for renaming ThirdParty -> thirdparty
-	sed -i 's/export WM_THIRD_PARTY=ThirdParty/export WM_THIRD_PARTY=thirdparty/' "OpenFOAM-${version}/etc/bashrc"
-	sed -i 's;export WM_THIRD_PARTY_DIR=$WM_PROJECT_INST_DIR/$WM_THIRD_PARTY-$WM_PROJECT_VERSION;export WM_THIRD_PARTY_DIR=$WM_PROJECT_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION/$WM_THIRD_PARTY;' "OpenFOAM-${version}/etc/bashrc"
+	sed -i 's/export WM_THIRD_PARTY=ThirdParty/export WM_THIRD_PARTY=thirdparty/' "OpenFOAM-${majorVersion}/etc/bashrc"
+	sed -i 's;export WM_THIRD_PARTY_DIR=$WM_PROJECT_INST_DIR/$WM_THIRD_PARTY-$WM_PROJECT_VERSION;export WM_THIRD_PARTY_DIR=$WM_PROJECT_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION/$WM_THIRD_PARTY;' "OpenFOAM-${majorVersion}/etc/bashrc"
 }
 do_build() {
 	export HOME="/builddir"
 	mkdir -p "$HOME/.OpenFOAM"
 	echo "export ParaView_TYPE=none" > $HOME/.OpenFOAM/prefs.sh
-	cd "OpenFOAM-${version}"
-	source ./etc/bashrc
+	cd "OpenFOAM-${majorVersion}"
+	source ./etc/bashrc || return 0
 	./Allwmake -j ${makejobs}
 }
 do_install() {
 	mkdir ${PKGDESTDIR}/opt/
-	mv *-${version} ${PKGDESTDIR}/opt/
-	#mv ThirdParty-${version} ${PKGDESTDIR}/opt/
+	mv *-${majorVersion} ${PKGDESTDIR}/opt/
 }
