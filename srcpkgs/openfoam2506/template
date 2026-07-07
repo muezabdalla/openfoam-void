@@ -9,7 +9,7 @@ maintainer="muez <muezabdalla777@gmail.com>"
 license="GPL-3.0"
 homepage="https://www.openfoam.com/"
 distfiles="${SOURCEFORGE_SITE}/openfoam/OpenFOAM-v${version}.tgz
- ${SOURCEFORGE_SITE}/openfoam/ThirdParty-v${version}.tar.gz"
+ ${SOURCEFORGE_SITE}/openfoam/ThirdParty-v${version}.tgz"
 checksum="63d26f48ae7ee9a7806a0ceb339ef8a0ba485a4714d54fbfb31e78e1a4849965
  f36ab81ba9e94b4771e27ad1c439bfd377d2a16b2919e7d969bc755ddf9eb0cc"
 python_version=3
