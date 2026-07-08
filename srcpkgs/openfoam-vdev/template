@@ -1,0 +1,35 @@
+# Template file for 'openfoam-vdev'
+pkgname=openfoam-vdev
+version=20260708
+revision=2
+hostmakedepends="wget"
+makedepends="libfl-devel openmpi-devel gnuplot libboost_thread flex boost-devel openmpi"
+depends="openmpi libboost_thread flex boost libgomp gnuplot"
+short_desc="OpenFOAM is a free, open source CFD software released and developed by OpenCFD Ltd"
+maintainer="muez <muezabdalla777@gmail.com>"
+license="GPL-3.0"
+homepage="https://www.openfoam.com/"
+distfiles="https://gitlab.com/openfoam/core/openfoam/-/archive/master/openfoam-master.tar.gz
+ https://gitlab.com/openfoam/core/thirdparty-common/-/archive/main/thirdparty-common-main.tar.gz"
+python_version=3
+
+do_fetch() {
+	mkdir -p $wrksrc
+	cd $wrksrc
+	wget ${distfiles}
+}
+do_extract() {
+	vtar -xf "openfoam-master.tar.gz"
+	vtar -xf "thirdparty-common-main.tar.gz"
+}
+do_build() {
+	mv "openfoam-master" "OpenFOAM-vdev"
+	mv "thirdparty-common-main" "OpenFOAM-vdev/thirdparty"
+	cd "OpenFOAM-vdev"
+	source ./etc/bashrc || exit 0
+	./Allwmake -j ${makejobs}
+}
+do_install() {
+	vmkdir opt
+	mv *-vdev ${PKGDESTDIR}/opt/
+}
