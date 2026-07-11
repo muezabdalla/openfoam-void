@@ -1,7 +1,7 @@
 # Template file for 'openfoam-vdev'
 pkgname=openfoam-vdev
-version=20260708
-revision=2
+version="$(date +%Y%m%d)"
+revision=1
 hostmakedepends="wget"
 makedepends="libfl-devel openmpi-devel gnuplot libboost_thread flex boost-devel openmpi"
 depends="openmpi libboost_thread flex boost libgomp gnuplot"

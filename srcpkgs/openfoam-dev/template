@@ -1,6 +1,6 @@
 # Template file for 'openfoam-dev'
 pkgname=openfoam-dev
-version=20260708
+version="$(date +%Y%m%d)"
 revision=1
 hostmakedepends="wget"
 makedepends="openmpi-devel flex base-devel openmpi"
