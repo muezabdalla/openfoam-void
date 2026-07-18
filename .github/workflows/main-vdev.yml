@@ -1,4 +1,4 @@
-name: build-dev
+name: build-vdev
 
 on:
   schedule:
@@ -57,7 +57,7 @@ jobs:
           export PATH="/opt/xbps/usr/bin/:$PATH"
           cd void-packages
           ./xbps-src -m masterdir-${{ matrix.arch }} -A ${{ matrix.arch }} binary-bootstrap
-          ./xbps-src pkg -j4 -m masterdir-${{ matrix.arch }} openfoam-dev
+          ./xbps-src pkg -j4 -m masterdir-${{ matrix.arch }} openfoam-vdev
 
       - name: download latest release to copy old packages
         uses: robinraju/release-downloader@v1
